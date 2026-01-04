@@ -1,0 +1,8 @@
+---
+- name: Docker playbook
+  hosts: docker
+  become: true
+  roles: 
+  - docker
+  collections:
+    - community.docker

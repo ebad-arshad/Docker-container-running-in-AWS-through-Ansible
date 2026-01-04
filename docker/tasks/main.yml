@@ -1,0 +1,60 @@
+#SPDX-License-Identifier: MIT-0
+---
+# tasks file for docker
+
+- name: Wait for SSH to come alive
+  wait_for_connection:
+    delay: 5
+    timeout: 300
+
+- name: Cache updates
+  apt:
+    cache_valid_time: 3600 
+- name: Install required packages
+  apt:
+    name:
+    - ca-certificates
+    - curl
+  
+- name: GPG key setup
+  apt_key:
+    url: https://download.docker.com/linux/ubuntu/gpg
+    state: present
+  
+- name: Add to ubuntu repository
+  apt_repository:
+    repo: "deb [arch=amd64] https://download.docker.com/linux/ubuntu {{ ansible_distribution_release }} stable"
+  
+- name: Install docker
+  apt:
+    name:
+      - docker-ce
+      - docker-ce-cli
+      - containerd.io
+
+- name: Install the Docker SDK using APT
+  apt:
+    name: python3-docker
+    state: present
+
+- name: Add ubuntu to docker group
+  user:
+    name: ubuntu
+    groups: docker
+    append: true
+  notify:
+  - Restart docker
+
+- name: Flush handlers to start Docker now
+  meta: flush_handlers
+
+- name: Reset connection to apply group changes
+  meta: reset_connection
+
+- name: Create a container using the Community Module
+  community.docker.docker_container:
+    name: nginx-container
+    image: nginx:latest
+    state: started
+    published_ports:
+    - "80:80"
